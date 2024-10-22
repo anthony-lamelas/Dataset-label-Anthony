@@ -1,3 +1,5 @@
+![Label Meister Logo](./label_meister.png)
+
 ## Step 1. In a teminal window, run this command to start the docker container that will run the dataset labler model:
 ```bash
 docker run -p 51009:51000 -v $HOME/.cache:/home/cas/.cache jinaai/clip-server
