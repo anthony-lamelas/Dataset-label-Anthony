@@ -12,3 +12,17 @@ It can be a zip file of images, or a csv file of text with each element in the C
 python main.py --file test.csv --categories "cat,dog,bird"
 ```
 #### Note: Images work much better, there are better options such as CHatGPT API if you want to label a text dataset
+
+
+
+============================================================
+
+## Licensing Information
+
+This project uses the CLIP server provided by [Jina AI](https://github.com/jina-ai/clip-as-service) through a Docker container, which is licensed under the **Apache License 2.0**.
+
+Portions of the CLIP server model, specifically `model.py` and `simple_tokenizer.py`, are licensed under the **MIT License** via [OpenCLIP](https://github.com/mlfoundations/open_clip).
+
+For more details on the license terms, please refer to:
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- [MIT License](https://opensource.org/licenses/MIT)
