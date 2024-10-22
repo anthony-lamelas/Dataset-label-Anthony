@@ -19,7 +19,7 @@ This command will pull and run the Jina AI CLIP server container, exposing it on
 ## Step 2: Run the Dataset Labeling Script
 #### In a second terminal window, ensure you are in the root directory of this cloned repository. With a virtual environment activated and all required packages from requirements.txt installed, run the following command to label a dataset:
 ```bash
-python main.py --file test.csv --categories "cat,dog,bird"
+python main.py --file test.csv --categories "cat,dog,bird,centipede,word,any words,any text sting will work,this command will work"
 ```
 ### Input File Options:
 * CSV File: Each element in the CSV should be on its own line.
