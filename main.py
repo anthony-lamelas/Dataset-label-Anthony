@@ -19,6 +19,15 @@
 #
 # Attribution: If you use or modify this code, you must provide proper
 # attribution to Harrison E. Muchnic as the original author.
+#
+#This project uses the CLIP server provided by [Jina AI](https://github.com/jina-ai/clip-as-service) through a Docker container, which is licensed under the **Apache License 2.0**.
+#
+#Portions of the CLIP server model, specifically `model.py` and `simple_tokenizer.py`, are licensed under the **MIT License** via [OpenCLIP](https://github.com/mlfoundations/open_clip).
+#
+#For more details on the license terms, please refer to:
+#- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+#- [MIT License](https://opensource.org/licenses/MIT)
+#
 # ==========================================================
 
 
