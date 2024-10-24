@@ -21,6 +21,8 @@ This command will pull and run the Jina AI CLIP server container, exposing it on
 ```bash
 python main.py --file test.csv --categories "cat,dog,bird,centipede,word,any words,any text sting will work,this command will work"
 ```
+* add "--batch_size" flag to adjust the number of images that are processed in each batch. Increase if you have a lot of RAM. Default is 100
+
 ### Input File Options:
 * CSV File: Each element in the CSV should be on its own line.
 * ZIP File of Images: A zip file containing images can be provided for labeling.
