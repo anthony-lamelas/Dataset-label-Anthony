@@ -1,0 +1,18 @@
+jtype: Flow
+version: '1'
+with:
+  port: 51000
+  protocol: grpc
+executors:
+  - name: clip_encoder
+    replicas: 8  # Adjust based on the number of GPUs and desired replicas per GPU
+    uses:
+      jtype: CLIPEncoder
+      with:
+        name: ViT-B/32  # Specify the CLIP model; adjust as needed
+        device: cuda  # Ensure the model runs on GPU
+        # Optional: Adjust batch size inside the encoder if needed
+        # minibatch_size: 64
+      metas:
+        py_modules:
+          - clip_server.executors.clip_torch
