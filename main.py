@@ -45,23 +45,25 @@ from concurrent.futures import ThreadPoolExecutor
 # Default image size for CLIP model
 CLIP_IMAGE_SIZE = (224, 224)
 
-client = Client('grpc://0.0.0.0:51009') #Createa client to docker container that is running clip model
+client = Client('grpc://0.0.0.0:51009')  # Create a client to the Docker container running the CLIP model
 
 def main():
     parser = argparse.ArgumentParser(description='Process files with CLIP.')
     parser.add_argument('--file', type=str, required=True, help='Path to the input file (zip or csv).')
     parser.add_argument('--categories', type=str, required=True, help='Comma-separated list of categories.')
     parser.add_argument('--batch_size', type=int, default=100, help='Batch size for processing data.')
+    parser.add_argument('--stats', action='store_true', help='Generate statistics file.')
     args = parser.parse_args()
-    
+
     file_path = args.file
     categories = args.categories.split(',')
     batch_size = args.batch_size
+    stats = args.stats
 
     # Process data
-    process_data(file_path, categories, client, batch_size)
+    process_data(file_path, categories, client, batch_size, stats)
 
-def process_data(file_path, categories, client, batch_size):
+def process_data(file_path, categories, client, batch_size, stats=False):
     try:
         # Load categories
         category_docs = DocumentArray([Document(text=cat.strip()) for cat in categories])
@@ -73,13 +75,17 @@ def process_data(file_path, categories, client, batch_size):
             writer = csv.DictWriter(csvfile, fieldnames=['file', 'label'])
             writer.writeheader()
 
+        # Initialize stats data if needed
+        stats_data = {} if stats else None
+        total_samples = 0  # To keep track of total number of samples processed
+
         # Process file
         if file_path.endswith('.zip'):
             with tempfile.TemporaryDirectory() as tmpdir:
-                # Extract images
+                # Extract all files
                 with zipfile.ZipFile(file_path) as zip_ref:
                     zip_ref.extractall(tmpdir)
-                # Get list of image files
+                # Get list of image files with supported extensions
                 image_paths = []
                 for root, _, files in os.walk(tmpdir):
                     for name in files:
@@ -89,7 +95,10 @@ def process_data(file_path, categories, client, batch_size):
                 total = len(image_paths)
                 for i in range(0, total, batch_size):
                     batch = image_paths[i:i+batch_size]
-                    process_batch(batch, categories, category_embeddings, client, output_file, i, total)
+                    num_processed = process_batch(
+                        batch, categories, category_embeddings, client, output_file, i, total, stats_data, is_text=False
+                    )
+                    total_samples += num_processed
 
         elif file_path.endswith('.csv'):
             with open(file_path, 'r') as f:
@@ -99,14 +108,25 @@ def process_data(file_path, categories, client, batch_size):
             total = len(texts)
             for i in range(0, total, batch_size):
                 batch = texts[i:i+batch_size]
-                process_batch(batch, categories, category_embeddings, client, output_file, i, total, is_text=True)
+                num_processed = process_batch(
+                    batch, categories, category_embeddings, client, output_file, i, total, stats_data, is_text=True
+                )
+                total_samples += num_processed
 
         else:
             print("Error: Unsupported file type.")
+            return
+
+        # Compute and write stats if required
+        if stats and stats_data is not None:
+            compute_and_write_stats(stats_data, total_samples, output_file='stats.csv')
+
     except Exception as e:
         print(f"Error: {e}")
 
-def process_batch(batch, categories, category_embeddings, client, output_file, start_idx, total, is_text=False):
+def process_batch(
+    batch, categories, category_embeddings, client, output_file, start_idx, total, stats_data=None, is_text=False
+):
     try:
         embeddings = []
         if is_text:
@@ -130,6 +150,9 @@ def process_batch(batch, categories, category_embeddings, client, output_file, s
                         # Print progress
                         percentage = int(((start_idx + idx + 1) / total) * 100)
                         print(f"Processing image {start_idx + idx + 1}/{total}: {os.path.basename(img_path)} ({percentage}%)")
+                    else:
+                        # Failed to process image
+                        pass
 
         # Assign labels and write to CSV
         results = []
@@ -139,12 +162,44 @@ def process_batch(batch, categories, category_embeddings, client, output_file, s
             label = categories[best_idx]
             results.append({'file': uri, 'label': label} if not is_text else {'text': uri, 'label': label})
 
+            # Collect stats if stats_data is not None
+            if stats_data is not None:
+                if label not in stats_data:
+                    # Initialize stats_data for this label
+                    stats_data[label] = {
+                        'count': 0,
+                        'dot_product_sum': 0.0,
+                        'dot_product_sq_sum': 0.0,
+                        'competitor_scores': {}
+                    }
+
+                # Update assigned category stats
+                stats_data[label]['count'] += 1
+                assigned_score = scores[best_idx]
+                stats_data[label]['dot_product_sum'] += assigned_score
+                stats_data[label]['dot_product_sq_sum'] += assigned_score ** 2
+
+                # Update competitor scores
+                for i, score in enumerate(scores):
+                    if i != best_idx:
+                        competitor_label = categories[i]
+                        if competitor_label not in stats_data[label]['competitor_scores']:
+                            stats_data[label]['competitor_scores'][competitor_label] = {
+                                'sum': 0.0,
+                                'count': 0
+                            }
+                        stats_data[label]['competitor_scores'][competitor_label]['sum'] += score
+                        stats_data[label]['competitor_scores'][competitor_label]['count'] += 1
+
         with open(output_file, 'a', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=['file', 'label'] if not is_text else ['text', 'label'])
             writer.writerows(results)
 
+        return len(embeddings)
+
     except Exception as e:
         print(f"Error processing batch: {e}")
+        return 0
 
 def process_image(img_path):
     try:
@@ -160,6 +215,44 @@ def process_image(img_path):
     except Exception as e:
         print(f"Error processing image {img_path}: {e}")
         return None
+
+def compute_and_write_stats(stats_data, total_samples, output_file='stats.csv'):
+    import csv
+    with open(output_file, 'w', newline='') as csvfile:
+        fieldnames = ['category', 'fraction', 'average_dot_product', 'variance', 'second_best_category']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for label, data in stats_data.items():
+            count = data['count']
+            fraction = count / total_samples if total_samples > 0 else 0
+            dot_product_sum = data['dot_product_sum']
+            dot_product_sq_sum = data['dot_product_sq_sum']
+            mean = dot_product_sum / count if count > 0 else 0
+            variance = (dot_product_sq_sum - (dot_product_sum ** 2) / count) / count if count > 0 else 0
+
+            # Compute average competitor scores
+            competitor_scores = data['competitor_scores']
+            competitor_averages = {}
+            for comp_label, comp_data in competitor_scores.items():
+                comp_sum = comp_data['sum']
+                comp_count = comp_data['count']
+                comp_mean = comp_sum / comp_count if comp_count > 0 else 0
+                competitor_averages[comp_label] = comp_mean
+
+            # Find the competitor category with highest average dot product
+            if competitor_averages:
+                second_best_category = max(competitor_averages.items(), key=lambda x: x[1])[0]
+            else:
+                second_best_category = None
+
+            writer.writerow({
+                'category': label,
+                'fraction': fraction,
+                'average_dot_product': mean,
+                'variance': variance,
+                'second_best_category': second_best_category
+            })
 
 if __name__ == "__main__":
     main()
