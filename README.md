@@ -14,7 +14,8 @@ pip install -r requirements.txt
 docker run -p 51009:51000 -v $HOME/.cache:/home/cas/.cache jinaai/clip-server
 ```
 This command will pull and run the Jina AI CLIP server container, exposing it on port 51009 for local communication. 
-* add "--gpus all" tag to the command if you have a GPU, and have docker configured for GPU acceleration with nvidia-container-toolkit. (This will result in your datset being labeled much more quickly)
+* add "--gpus all" flag to the command if you have a GPU, and have docker configured for GPU acceleration with nvidia-container-toolkit. (This will result in your datset being labeled much more quickly)
+* add "--stats" flag to get a stats.csv that includes insightful stats
 
 ## Step 2: Run the Dataset Labeling Script
 #### In a second terminal window, ensure you are in the root directory of this cloned repository. With a virtual environment activated and all required packages from requirements.txt installed, run the following command to label a dataset:
