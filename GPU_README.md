@@ -3,17 +3,27 @@
 CUDA_VISIBLE_DEVICES=RR0:4
 cat optimized_main.yml | docker run -i -p 51009:51000 -v $HOME/.cache:/home/cas/.cache --gpus all jinaai/clip-server -i
 ```
-### GPU Assignment with 8 Replicas:
+# Then run optimized_main.py in a separate terminal window
+```bash
+python -m venv venv
+sleep(2)
+source venv/bin/activate
+pip -r install requirements.txt
+sleep(3)
+python optimized_main.py --file /path/to/file --stats --batch_size 10000 --prefetch 1 --categories "cat,dog,bear,donkey,hippo"
+``` 
 
-Replica ID	Assigned GPU
-0	          GPU 0
-1	          GPU 1
-2	          GPU 2
-3	          GPU 3  
-4	          GPU 0  
-5	          GPU 1
-6	          GPU 2
-7	          GPU 3  
+### GPU Assignment with 8 Replicas:
+|Replica ID | Assigned GPU|
+|-----------|-------------|
+|0	          |GPU 0|
+|1	          |GPU 1|
+|2	          |GPU 2|
+|3	          |GPU 3| 
+|4	          |GPU 0| 
+|5	          |GPU 1|
+|6	          |GPU 2|
+|7	          |GPU 3|  
 
 ## Adjust According to Your Hardware:
 * If you have more GPUs, adjust RR0:N where N is the number of GPUs. Increase replicas in the YAML to create more replicas per GPU.
