@@ -1,6 +1,8 @@
 ![Label Meister Logo](./label_meister.png)
 
 # Getting Started
+## FOLLOW GPU_README INSTRUCTIONS INSTEAD OF THIS FOR MAX PERFORMANCE ON ONE OR MULTIPLE GPU
+
 ## Requirements
 Make sure you have Docker and Python3.12 installed on your system, and that it is functioning properly.
 Before running the script, make sure you have the following dependencies installed (listed in requirements.txt). Use a virtual environment to manage these packages:
@@ -30,8 +32,6 @@ python main.py --file test.csv --categories "cat,dog,bird,centipede,word,any wor
 ### Note:
 * Images Work Best: The model performs better with images compared to text datasets.
 * For text datasets, it is recommended to use more advanced options like the ChatGPT API for higher accuracy.
-
-# FOLLOW GPU_README INSTRUCTIONS FOR MAX PERFORMANCE ON GPU(S)
 
 ============================================================
 
