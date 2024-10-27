@@ -31,8 +31,7 @@ python main.py --file test.csv --categories "cat,dog,bird,centipede,word,any wor
 * Images Work Best: The model performs better with images compared to text datasets.
 * For text datasets, it is recommended to use more advanced options like the ChatGPT API for higher accuracy.
 
-
-
+# FOLLOW GPU_README INSTRUCTIONS FOR MAX PERFORMANCE ON GPU(S)
 
 ============================================================
 
