@@ -42,7 +42,7 @@ from clip_client import Client
 from docarray import DocumentArray, Document
 import asyncio
 
-# Initialize the CLIP client
+# Initialize the CLIP client. If you are insane and CPU or network becomes bottleneck, and other finetuning is not enough, make multiple client objects 
 client = Client('grpc://0.0.0.0:51009')
 
 async def main():
