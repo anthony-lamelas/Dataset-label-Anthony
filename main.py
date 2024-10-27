@@ -32,6 +32,7 @@
 #
 # ==========================================================
 
+#NOTE: it processes faster to use optimized_main.py instead of main.py even if your just using CPU. But if your using CPU, you probably dont care too much about processing time.
 import os
 import argparse
 from clip_client import Client
@@ -41,6 +42,7 @@ import csv
 import tempfile
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
+import numpy as np
 
 # Default image size for CLIP model
 CLIP_IMAGE_SIZE = (224, 224)
@@ -68,6 +70,7 @@ def process_data(file_path, categories, client, batch_size, stats=False):
         # Load categories
         category_docs = DocumentArray([Document(text=cat.strip()) for cat in categories])
         category_embeddings = client.encode(category_docs)
+        category_embedding = category_embedding / np.linalg.norm(category_embedding) #forgot to normalize :/
 
         # Prepare to write results incrementally
         output_file = 'results.csv'
@@ -134,6 +137,7 @@ def process_batch(
             for idx, text in enumerate(batch):
                 doc = Document(text=text)
                 embedding = client.encode([doc])[0].embedding
+                embedding = embedding / np.linalg.norm(embedding)
                 embeddings.append((text, embedding))
                 # Print progress
                 percentage = int(((start_idx + idx + 1) / total) * 100)
@@ -211,6 +215,8 @@ def process_image(img_path):
         doc = Document(uri=img_path)
         doc.tensor = img  # Directly set the tensor with resized image
         embedding = client.encode([doc])[0].embedding
+        embedding = embedding / np.linalg.norm(embedding)
+        
         return img_path, embedding
     except Exception as e:
         print(f"Error processing image {img_path}: {e}")
