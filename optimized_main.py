@@ -167,6 +167,13 @@ async def process_items(
             # Normalize embeddings
             embeddings = np.array([emb / np.linalg.norm(emb) for emb in embeddings])
 
+            # Write embeddings to tsv file for PCA
+            with open("embeddings.tsv", "a", newline="") as embfile:
+                emb_writer = csv.writer(embfile, delimiter="\t")
+                for idx, emb_vec in enumerate(embeddings):
+                    row = [batch_items[idx]] + emb_vec.tolist()
+                    emb_writer.writerow(row)
+
             # Assign labels and collect stats
             results = []
             for idx, embedding in enumerate(embeddings):
